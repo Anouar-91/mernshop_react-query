@@ -1,50 +1,46 @@
 import React, { useEffect, useState } from "react";
 import Product from "../components/Product";
 import { ThreeDots } from "react-loader-spinner";
-//redux
-import { useDispatch, useSelector } from "react-redux";
 import Message from "../components/Message";
-import { listProducts } from "../redux-toolkit/reducers/productReducer";
 import { useParams } from "react-router-dom";
 import Paginate from "../components/Paginate";
 import ProductCarousel from "../components/ProductCarousel";
 import Meta from "../components/Meta";
-import { useQuery } from "react-query";
-import axios from "axios";
+import { useQuery, useQueryClient } from "react-query";
 
 const HomeScreen = () => {
+  const queryClient = useQueryClient();
+  const [page, setPage] = React.useState(0);
   let { keyword } = useParams();
-  let { pageNumber } = useParams();
-  //const dispatch = useDispatch();
-  //const productsList = useSelector(state => state.productsList)
-  //const { loading, error, products, page, pages } = productsList
+  const fetchProducts = (page = 0, keyword = "") =>
+    fetch(process.env.REACT_APP_API_URL +
+        "products/react-query/?" +
+        "page=" +
+        page +
+        "&keyword=" +
+        keyword
+    ).then((res) => res.json());
 
-  /*     useEffect(() => {
-        dispatch(listProducts({keyword, pageNumber}))
-    }, [dispatch, keyword, pageNumber]) */
+  const { isLoading, status, data, error, isFetching, isPreviousData } =
+    useQuery(["products", page, keyword], () => fetchProducts(page, keyword), {
+      keepPreviousData: true,
+    });
 
-  const fetchProducts = async () => {
-    const { data } = await axios.get(
-      process.env.REACT_APP_API_URL +
-        "products?keyword=" +
-        keyword +
-        "&pageNumber=" +
-        pageNumber
-    );
-    return data;
-  };
-  //react query
-  const { isLoading, error, data } = useQuery("productAll", () =>
-    fetch(process.env.REACT_APP_API_URL + 'products').then((res) => res.json())
-  );
-  console.log(data);
-  //end
+useEffect(() => {
+  // Vérifie si l'objet data a une propriété "hasMore" qui est vraie
+  if (data?.hasMore) {
+    // Précharge les données de la page suivante en utilisant la méthode prefetchQuery du queryClient
+    // La clé pour cette requête est un tableau qui contient "products" et la page suivante
+    // La fonction fetchProducts est utilisée pour effectuer la requête
+    queryClient.prefetchQuery(["productsNext", page + 1], () => fetchProducts(page + 1),keyword);
+  }
+}, [data, page, queryClient, keyword]);
 
   return (
     <div className="container">
       <Meta />
 
-      {/*                {!keyword && <><div className="mt-3"><ProductCarousel /></div></>} */}
+                     {!keyword && <><div className="mt-3"><ProductCarousel /></div></>}
 
       <h1>Latest Products</h1>
       {isLoading ? (
@@ -54,7 +50,7 @@ const HomeScreen = () => {
       ) : (
         <>
           <div className="row">
-            {data.products.map((product) => {
+            {data.productsForPage.map((product) => {
               return (
                 <div key={product._id} className="col-md-4">
                   <Product product={product} />
@@ -62,13 +58,27 @@ const HomeScreen = () => {
               );
             })}
           </div>
-{/*           <div className="mt-5">
-            <Paginate
-              pages={data.pages}
-              page={data.page}
-              keyword={keyword ? keyword : ""}
-            />
-          </div> */}
+          <div className="mt-5">
+            <span>Current Page: {page + 1}</span>
+            <button
+              onClick={() => setPage((old) => Math.max(old - 1, 0))}
+              disabled={page === 0}
+            >
+              Previous Page
+            </button>{" "}
+            <button
+              onClick={() => {
+                if (!isPreviousData && data.hasMore) {
+                  setPage((old) => old + 1);
+                }
+              }}
+              // Disable the Next Page button until we know a next page is available
+              disabled={isPreviousData || !data?.hasMore}
+            >
+              Next Page
+            </button>
+            {isFetching ? <span> Loading...</span> : null}{" "}
+          </div>
         </>
       )}
     </div>

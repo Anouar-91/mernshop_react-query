@@ -19,7 +19,7 @@ import ProductListScreen from "./screens/ProductListScreen";
 import ProductEditScreen from "./screens/ProductEditScreen";
 import OrderListScreen from "./screens/OrderListScreen";
 import { QueryClient, QueryClientProvider } from "react-query";
-
+import { ReactQueryDevtools } from 'react-query/devtools'
 const queryClient = new QueryClient();
 
 function App() {
@@ -27,6 +27,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Header></Header>
+        <ReactQueryDevtools initialIsOpen={false} />
         <main>
           <div className="container-fluid">
             <Routes>
