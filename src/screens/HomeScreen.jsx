@@ -63,6 +63,7 @@ useEffect(() => {
             <button
               onClick={() => setPage((old) => Math.max(old - 1, 0))}
               disabled={page === 0}
+              class="btn btn-warning"
             >
               Previous Page
             </button>{" "}
@@ -74,6 +75,7 @@ useEffect(() => {
               }}
               // Disable the Next Page button until we know a next page is available
               disabled={isPreviousData || !data?.hasMore}
+              class="btn btn-primary"
             >
               Next Page
             </button>
