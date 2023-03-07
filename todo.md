@@ -1,0 +1,1 @@
+voir le problème de navbar qui change pas quand j'update le profile
