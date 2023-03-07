@@ -13,7 +13,8 @@ const HomeScreen = () => {
   const [page, setPage] = React.useState(0);
   let { keyword } = useParams();
   const fetchProducts = (page = 0, keyword = "") =>
-    fetch(process.env.REACT_APP_API_URL +
+    fetch(
+      process.env.REACT_APP_API_URL +
         "products/react-query/?" +
         "page=" +
         page +
@@ -26,23 +27,40 @@ const HomeScreen = () => {
       keepPreviousData: true,
     });
 
-useEffect(() => {
-  // Vérifie si l'objet data a une propriété "hasMore" qui est vraie
-  if (data?.hasMore) {
-    // Précharge les données de la page suivante en utilisant la méthode prefetchQuery du queryClient
-    // La clé pour cette requête est un tableau qui contient "products" et la page suivante
-    // La fonction fetchProducts est utilisée pour effectuer la requête
-    queryClient.prefetchQuery(["productsNext", page + 1], () => fetchProducts(page + 1),keyword);
-  }
-}, [data, page, queryClient, keyword]);
+  useEffect(() => {
+    // Vérifie si l'objet data a une propriété "hasMore" qui est vraie
+    if (data?.hasMore) {
+      // Précharge les données de la page suivante en utilisant la méthode prefetchQuery du queryClient
+      // La clé pour cette requête est un tableau qui contient "products" et la page suivante
+      // La fonction fetchProducts est utilisée pour effectuer la requête
+      queryClient.prefetchQuery(
+        ["productsNext", page + 1],
+        () => fetchProducts(page + 1),
+        keyword
+      );
+    }
+  }, [data, page, queryClient, keyword]);
 
   return (
     <div className="container">
       <Meta />
 
-                     {!keyword && <><div className="mt-3"><ProductCarousel /></div></>}
+      {!keyword && (
+        <>
+          <div className="mt-3">
+            <ProductCarousel />
+          </div>
+        </>
+      )}
 
-      <h1>Latest Products</h1>
+      <h1>
+        Latest Products{" "}
+        {isFetching && (
+          <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        )}
+      </h1>
       {isLoading ? (
         <ThreeDots wrapperStyle={{ justifyContent: "center" }} />
       ) : error ? (
